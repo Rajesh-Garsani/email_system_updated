@@ -1,0 +1,205 @@
+{% extends 'campaigns/base.html' %}
+
+{% block content %}
+<style>
+    /* Card Styling */
+    .dash-card {
+        border-radius: 1rem;
+        border: none;
+        background-color: #ffffff;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+        overflow: hidden;
+    }
+    .dash-card-header {
+        background-color: #ffffff;
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1.5rem 1.5rem 1rem;
+    }
+    .dash-card-body {
+        padding: 1.5rem;
+    }
+
+    /* Auto-style Django's form.as_p elements */
+    .django-form p {
+        margin-bottom: 1.25rem;
+    }
+    .django-form label {
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .django-form input[type="text"],
+    .django-form input[type="email"],
+    .django-form input[type="password"],
+    .django-form input[type="number"],
+    .django-form textarea,
+    .django-form select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        border-radius: 0.5rem;
+        border: 1px solid #d1d5db;
+        background-color: #fefefe;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .django-form input:focus,
+    .django-form select:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        outline: none;
+    }
+    .django-form input[type="checkbox"] {
+        margin-right: 0.5rem;
+        transform: scale(1.2);
+        accent-color: #4f46e5;
+    }
+    .django-form .helptext {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+        display: block;
+    }
+
+    /* Modern Buttons */
+    .btn-save {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+        padding: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        border-radius: 0.5rem;
+        color: white;
+        transition: all 0.2s ease-in-out;
+    }
+    .btn-save:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        color: white;
+    }
+
+    /* Sidebar Styling */
+    .sidebar-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+    .account-list {
+        border-radius: 1rem;
+        overflow: hidden;
+        background: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .account-list .list-group-item {
+        border: none;
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1.25rem 1.5rem;
+    }
+    .account-list .list-group-item:last-child {
+        border-bottom: none;
+    }
+    .account-email {
+        font-weight: 600;
+        color: #374151;
+        font-size: 1rem;
+    }
+
+    /* Soft Alerts & Badges */
+    .alert-soft-warning {
+        background-color: #fffbeb;
+        border: 1px solid #fde68a;
+        color: #92400e;
+        border-radius: 0.5rem;
+    }
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.35em 0.7em;
+        border-radius: 2rem;
+    }
+</style>
+
+<div class="row g-4 py-4">
+    <div class="col-lg-7">
+        <div class="card dash-card">
+            <div class="card-header dash-card-header d-flex align-items-center">
+                <svg width="24" height="24" fill="#4f46e5" class="bi bi-envelope-plus-fill me-2" viewBox="0 0 16 16">
+                    <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555ZM0 4.697v7.104l5.803-3.558L0 4.697ZM6.761 8.83l-6.57 4.026A2 2 0 0 0 2 14h6.256A4.493 4.493 0 0 1 8 12.5a4.49 4.49 0 0 1 1.606-3.446l-.367-.225L8 9.586l-1.239-.757ZM16 4.697v4.974A4.491 4.491 0 0 0 12.5 8a4.49 4.49 0 0 0-1.965.45l-.338-.207L16 4.697Z"/>
+                    <path d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-3.5-2a.5.5 0 0 0-.5.5v1h-1a.5.5 0 0 0 0 1h1v1a.5.5 0 0 0 1 0v-1h1a.5.5 0 0 0 0-1h-1v-1a.5.5 0 0 0-.5-.5Z"/>
+                </svg>
+                <h4 class="mb-0 fw-bold" style="color: #1f2937;">Add Email Account</h4>
+            </div>
+
+            <div class="card-body dash-card-body">
+                <div class="alert alert-soft-warning d-flex align-items-start mb-4 shadow-sm">
+                    <svg width="20" height="20" fill="currentColor" class="bi bi-exclamation-triangle-fill me-3 mt-1 flex-shrink-0" viewBox="0 0 16 16">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                    <div>
+                        <strong>Important Note:</strong> For Gmail, use an <strong>App Password</strong>, not your normal Gmail password. You must enable 2-Step Verification in your Google account first.
+                    </div>
+                </div>
+
+                <form method="post" class="django-form">
+                    {% csrf_token %}
+
+                    {{ form.as_p }}
+
+                    <button type="submit" class="btn btn-save w-100 mt-3 d-flex justify-content-center align-items-center">
+                        <svg width="18" height="18" fill="currentColor" class="bi bi-check-circle-fill me-2" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                        </svg>
+                        Save Email Account
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <h4 class="sidebar-title">
+            <svg width="20" height="20" fill="#6b7280" class="bi bi-hdd-network-fill me-2" viewBox="0 0 16 16">
+                <path d="M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h5.5v3A1.5 1.5 0 0 0 6 11.5H.5a.5.5 0 0 0 0 1H6A1.5 1.5 0 0 0 7.5 14h1a1.5 1.5 0 0 0 1.5-1.5h5.5a.5.5 0 0 0 0-1H10A1.5 1.5 0 0 0 8.5 10V7H14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm.5 1.5a.5.5 0 1 1 0 1 .5.5 0 0 1 0-1zm2 0a.5.5 0 1 1 0 1 .5.5 0 0 1 0-1z"/>
+            </svg>
+            My Email Accounts
+        </h4>
+
+        <div class="list-group account-list">
+            {% for account in accounts %}
+                <div class="list-group-item d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="account-email text-truncate me-2">{{ account.email_address }}</span>
+
+                        {% if account.is_active %}
+                            <span class="status-badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                        {% else %}
+                            <span class="status-badge bg-secondary-subtle text-secondary border border-secondary-subtle">Inactive</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex align-items-center text-muted small">
+                        <svg width="12" height="12" fill="currentColor" class="bi bi-server me-1" viewBox="0 0 16 16">
+                            <path d="M1.333 2.667C1.333 1.194 4.318 0 8 0s6.667 1.194 6.667 2.667V4c0 1.473-2.985 2.667-6.667 2.667S1.333 5.473 1.333 4V2.667z"/>
+                            <path d="M1.333 6.334v3C1.333 10.805 4.318 12 8 12s6.667-1.194 6.667-2.666v-3c0 1.473-2.985 2.667-6.667 2.667S1.333 7.806 1.333 6.334z"/>
+                            <path d="M1.333 11.334v3C1.333 15.805 4.318 17 8 17s6.667-1.194 6.667-2.666v-3c0 1.473-2.985 2.667-6.667 2.667S1.333 12.806 1.333 11.334z"/>
+                        </svg>
+                        {{ account.provider }} | SMTP: {{ account.smtp_host }}:{{ account.smtp_port }}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="p-4 text-center text-muted bg-white">
+                    <svg width="32" height="32" fill="#d1d5db" class="bi bi-inbox-fill mb-2" viewBox="0 0 16 16">
+                        <path d="M4.98 4a.5.5 0 0 0-.39.188L1.54 8H6a.5.5 0 0 1 .5.5 1.5 1.5 0 1 0 3 0A.5.5 0 0 1 10 8h4.46l-3.05-3.812A.5.5 0 0 0 11.02 4H4.98zm-1.17-.437A1.5 1.5 0 0 1 4.98 3h6.04a1.5 1.5 0 0 1 1.17.563l3.7 4.625A.5.5 0 0 1 16 8.5V13a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V8.5a.5.5 0 0 1 .19-.312l3.7-4.625z"/>
+                    </svg>
+                    <p class="mb-0 small">No email accounts added yet.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

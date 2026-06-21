@@ -1,0 +1,235 @@
+{% extends 'campaigns/base.html' %}
+
+{% block content %}
+<style>
+    /* Page Header & Buttons */
+    .page-title {
+        font-weight: 700;
+        color: #1f2937;
+        letter-spacing: -0.5px;
+    }
+    .action-btn {
+        border: none;
+        padding: 0.6rem 1.2rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease-in-out;
+        display: inline-flex;
+        align-items: center;
+    }
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .btn-send {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+    }
+    .btn-send:hover { color: white; }
+
+    .btn-check {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        color: white;
+    }
+    .btn-check:hover { color: white; }
+
+    /* Alert Box */
+    .alert-soft {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Table Card Styling */
+    .data-card {
+        border-radius: 1rem;
+        border: none;
+        background-color: #ffffff;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+        overflow: hidden;
+    }
+    .custom-table th {
+        background-color: #f8fafc;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 1rem 1.5rem;
+    }
+    .custom-table td {
+        padding: 1rem 1.5rem;
+        color: #374151;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .custom-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Modern Badges using Bootstrap 5 Subtle Colors */
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.4em 0.8em;
+        border-radius: 2rem;
+    }
+
+    /* Modal Styling */
+    .modal-content {
+        border-radius: 1rem;
+        border: none;
+        overflow: hidden;
+    }
+    .reply-box {
+        background-color: #f1f5f9;
+        border-left: 4px solid #0ea5e9;
+        border-radius: 0.25rem;
+    }
+    .custom-textarea {
+        border-radius: 0.5rem;
+        border: 1px solid #cbd5e1;
+        padding: 1rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .custom-textarea:focus {
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+        outline: none;
+    }
+</style>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+        <h2 class="page-title mb-1">Campaign: {{ campaign.name }}</h2>
+        <div class="d-flex align-items-center text-muted small">
+            <svg width="14" height="14" fill="currentColor" class="bi bi-envelope-paper-fill me-1" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M6.5 9.5 3 7.5v-6A1.5 1.5 0 0 1 4.5 0h7A1.5 1.5 0 0 1 13 1.5v6l-3.5 2L8 8.75l-1.5.75ZM1.059 3.635 2 3.145v3.531l-1.15-.65A1.5 1.5 0 0 1 0 4.5v-.058l1.059-.807ZM14 3.145l.941.49A1.5 1.5 0 0 1 15 4.5v.058l-1.059.807L15 6.026V4.5a1.5 1.5 0 0 0-.276-.865L14 3.145ZM1 6.026l1.15.65V10.2l-1.059.608A1.5 1.5 0 0 1 0 9.5v-3.41l1 .536v-.599Zm12.85 4.781L15 10.2V9.5a1.5 1.5 0 0 0-.85-1.353l-1-.536v.6l1.059.608-1.15.65v3.531ZM2 10.2v3.3A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5v-3.3l-3.5 2L8 11.25l-2.5 1.45-3.5-2Z"/>
+            </svg>
+            <span class="me-3">{{ campaign.email_account.email_address }}</span>
+            <span class="badge bg-secondary rounded-pill">{{ campaign.status }}</span>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <form method="post" action="{% url 'trigger_send' campaign.pk %}" class="m-0">
+            {% csrf_token %}
+            <button type="submit" class="action-btn btn-send">
+                <svg width="16" height="16" fill="currentColor" class="bi bi-send-fill me-2" viewBox="0 0 16 16"><path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083l6-15Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471-.47 1.178Z"/></svg>
+                Send Emails
+            </button>
+        </form>
+        <form method="post" action="{% url 'trigger_check_replies' campaign.pk %}" class="m-0">
+            {% csrf_token %}
+            <button type="submit" class="action-btn btn-check">
+                <svg width="16" height="16" fill="currentColor" class="bi bi-arrow-repeat me-2" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>
+                Check Replies
+            </button>
+        </form>
+        <a href="{% url 'dashboard' %}" class="btn btn-light border fw-medium px-3 d-inline-flex align-items-center rounded-3">
+            Back
+        </a>
+    </div>
+</div>
+
+<div class="alert alert-soft mb-4 shadow-sm" role="alert">
+    <svg width="20" height="20" fill="#0ea5e9" class="bi bi-info-circle-fill me-3 flex-shrink-0" viewBox="0 0 16 16">
+        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+    </svg>
+    <div>
+        Click <strong>Send Emails</strong>. The system sends a safe small batch, personalizes <code>Hi,</code> into <code>Hi Name,</code>, and updates statuses below.
+    </div>
+</div>
+
+<div class="card data-card mb-5">
+    <div class="table-responsive">
+        <table class="table custom-table mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Last Sent</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in campaign.recipients.all %}
+                <tr>
+                    <td class="fw-medium">{{ rec.name }}</td>
+                    <td class="text-muted">{{ rec.email }}</td>
+                    <td>
+                        <span class="status-badge
+                            {% if rec.status == 'Sent' %}bg-success-subtle text-success
+                            {% elif rec.status == 'Failed' %}bg-danger-subtle text-danger
+                            {% elif rec.status == 'Replied' %}bg-info-subtle text-info-emphasis
+                            {% elif rec.status == 'Queued' or rec.status == 'Sending' %}bg-warning-subtle text-warning-emphasis
+                            {% else %}bg-secondary-subtle text-secondary{% endif %}">
+                            {{ rec.status }}
+                        </span>
+                    </td>
+                    <td class="text-muted small">{{ rec.last_sent|date:"M d, H:i"|default:"-" }}</td>
+                    <td>
+                        {% if rec.status == 'Failed' %}
+                            <span class="text-danger small fw-medium">{{ rec.error_message|default:"" }}</span>
+
+                        {% elif rec.status == 'Replied' and rec.reply_text %}
+                            <button type="button" class="btn btn-sm btn-outline-info fw-semibold rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#replyModal{{ rec.id }}">
+                                View & Reply
+                            </button>
+
+                            <div class="modal fade" id="replyModal{{ rec.id }}" tabindex="-1">
+                                <div class="modal-dialog modal-lg modal-dialog-centered">
+                                    <div class="modal-content shadow-lg">
+                                        <div class="modal-header bg-info bg-gradient text-white border-0">
+                                            <h5 class="modal-title d-flex align-items-center">
+                                                <svg width="20" height="20" fill="currentColor" class="bi bi-chat-left-text-fill me-2" viewBox="0 0 16 16">
+                                                    <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2zm3.5 1a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2.5a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5z"/>
+                                                </svg>
+                                                Communication with {{ rec.name }}
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body p-4">
+                                            <div class="mb-4 p-3 reply-box">
+                                                <div class="text-uppercase small fw-bold text-info-emphasis mb-2">Their Message:</div>
+                                                <div style="white-space: pre-wrap; font-size: 0.95rem; color: #334155;">{{ rec.reply_text }}</div>
+                                            </div>
+                                            <form method="post" action="{% url 'send_reply' rec.id %}">
+                                                {% csrf_token %}
+                                                <div class="mb-4">
+                                                    <label class="form-label fw-semibold text-dark">Write your reply:</label>
+                                                    <textarea class="form-control custom-textarea w-100" name="reply_message" rows="5" placeholder="Type your message here..." required></textarea>
+                                                </div>
+                                                <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                                                    <button type="button" class="btn btn-light fw-medium" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn action-btn btn-send m-0">Send Reply</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <span class="text-muted small">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center p-5 text-muted">
+                        <svg width="32" height="32" fill="#d1d5db" class="bi bi-people-fill mb-2" viewBox="0 0 16 16">
+                            <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7Zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216ZM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
+                        </svg>
+                        <p class="mb-0">No recipients found for this campaign.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends 'campaigns/base.html' %}
+
+{% block content %}
+<style>
+    /* Modern UI Enhancements */
+    .auth-card {
+        border-radius: 1rem;
+        border: none;
+        overflow: hidden;
+        background-color: #ffffff;
+    }
+    .auth-header {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        padding: 2.5rem 2rem;
+        text-align: center;
+        border-bottom: none;
+    }
+    .auth-card-body {
+        padding: 2.5rem 2rem;
+    }
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    /* Styles target Django's default input rendering */
+    .custom-input-wrapper input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid #d1d5db;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .custom-input-wrapper input:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        outline: none;
+    }
+    .auth-btn {
+        background-color: #4f46e5;
+        border: none;
+        padding: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease-in-out;
+    }
+    .auth-btn:hover {
+        background-color: #4338ca;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+    .info-box {
+        background-color: #f3f4f6;
+        border-left: 4px solid #6b7280;
+        border-radius: 0.25rem;
+        padding: 0.75rem;
+        font-size: 0.85rem;
+        color: #4b5563;
+    }
+    .auth-link {
+        color: #4f46e5;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s ease;
+    }
+    .auth-link:hover {
+        color: #3730a3;
+        text-decoration: underline;
+    }
+</style>
+
+<div class="row justify-content-center py-5">
+    <div class="col-md-8 col-lg-6 col-xl-5">
+        <div class="card auth-card shadow-lg">
+
+            <div class="card-header auth-header">
+                <h3 class="mb-1 fw-bold text-white">Create an Account</h3>
+                <p class="mb-0 text-white-50 small">Fill in the details below to get started</p>
+            </div>
+
+            <div class="card-body auth-card-body">
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+                        <div class="d-flex align-items-center mb-2">
+                            <svg width="20" height="20" fill="currentColor" class="bi bi-exclamation-circle-fill text-danger me-2" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                            </svg>
+                            <strong class="text-danger">Please correct the following:</strong>
+                        </div>
+                        <ul class="mb-0 small text-danger">
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-4 custom-input-wrapper">
+                        <label class="form-label">Username</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="text-danger small mt-2 fw-medium">
+                                {% for error in form.username.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4 custom-input-wrapper">
+                        <label class="form-label">Gmail Address</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger small mt-2 fw-medium">
+                                {% for error in form.email.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4 custom-input-wrapper">
+                            <label class="form-label">Password</label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                                <div class="text-danger small mt-2 fw-medium">
+                                    {% for error in form.password1.errors %}<div>{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-4 custom-input-wrapper">
+                            <label class="form-label">Confirm Password</label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                                <div class="text-danger small mt-2 fw-medium">
+                                    {% for error in form.password2.errors %}<div>{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4 custom-input-wrapper">
+                        <label class="form-label">Gmail App Password</label>
+                        {{ form.email_app_password }}
+                        {% if form.email_app_password.errors %}
+                            <div class="text-danger small mt-2 fw-medium">
+                                {% for error in form.email_app_password.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="info-box mt-3 mt-2 d-flex align-items-start">
+                            <svg width="16" height="16" fill="currentColor" class="bi bi-info-circle-fill me-2 mt-1" viewBox="0 0 16 16">
+                                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                            </svg>
+                            <span>Enable <strong>2-Step Verification</strong> in Gmail, then create an <strong>App Password</strong> to use this service securely.</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn auth-btn btn-primary w-100 text-white mt-2">
+                        Create Account
+                    </button>
+                </form>
+
+                <div class="text-center mt-4 pt-3 border-top">
+                    <span class="text-muted">Already have an account?</span>
+                    <a href="{% url 'login' %}" class="auth-link ms-1">Log In</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
