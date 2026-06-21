@@ -37,7 +37,7 @@ def register_view(request):
                 )
 
                 message = EmailMessage(
-                    subject="Your CampaignManager Security Code",
+                    subject="Send_Mail",
                     body=f"Hello {username},\n\nYour security verification code is: {otp}\n\nUse this code to complete your registration. If you did not request this, please ignore this email.\n\n- CampaignManager Security",
                     from_email=email,
                     to=[email],

@@ -143,7 +143,17 @@
         </div>
     </div>
     <div class="d-flex flex-wrap gap-2">
-        {% if campaign.status != 'Queued' and campaign.status != 'Sending' %}
+        {% if campaign.status == 'Completed' %}
+        <button class="action-btn text-white m-0" disabled style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); opacity: 0.9; cursor: default;">
+            <svg width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill me-2" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>
+            Completed
+        </button>
+        {% elif campaign.status == 'Queued' or campaign.status == 'Sending' %}
+        <button class="action-btn btn-secondary text-white" disabled>
+            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+            Sending...
+        </button>
+        {% else %}
         <form method="post" action="{% url 'trigger_send' campaign.pk %}" class="m-0">
             {% csrf_token %}
             <button type="submit" class="action-btn btn-send">
@@ -151,11 +161,6 @@
                 Start Campaign
             </button>
         </form>
-        {% else %}
-        <button class="action-btn btn-secondary text-white" disabled>
-            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-            Sending...
-        </button>
         {% endif %}
 
         <form method="post" action="{% url 'trigger_check_replies' campaign.pk %}" class="m-0">
@@ -176,16 +181,18 @@
 <div class="alert alert-soft-warning mb-4 shadow-sm" role="alert">
     <div class="spinner-border text-warning me-3" role="status" style="width: 1.5rem; height: 1.5rem;"></div>
     <div>
-        <strong>Campaign in progress!</strong> The system is currently sending emails in the background. This page is set to <b>live-update automatically</b>.
+        <strong>Campaign in progress!</strong>
     </div>
 </div>
+{% elif campaign.status == 'Completed' %}
+
 {% else %}
 <div class="alert alert-soft mb-4 shadow-sm" role="alert">
     <svg width="20" height="20" fill="#0ea5e9" class="bi bi-info-circle-fill me-3 flex-shrink-0" viewBox="0 0 16 16">
         <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
     </svg>
     <div>
-        Click <strong>Start Campaign</strong>. The system will securely process and send your emails in the background.
+        Click <strong>Start Campaign</strong>.
     </div>
 </div>
 {% endif %}
@@ -203,7 +210,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for rec in campaign.recipients.all %}
+                {% for rec in page_obj %}
                 <tr>
                     <td class="fw-medium">{{ rec.name }}</td>
                     <td class="text-muted">{{ rec.email }}</td>
@@ -278,6 +285,42 @@
         </table>
     </div>
 </div>
+
+{% if page_obj.has_other_pages %}
+<nav aria-label="Recipient pagination" class="mb-5">
+    <ul class="pagination justify-content-center custom-pagination">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link text-secondary" href="?page={{ page_obj.previous_page_number }}">
+                    &laquo; Previous
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link text-muted bg-light">&laquo; Previous</span>
+            </li>
+        {% endif %}
+
+        <li class="page-item active" aria-current="page">
+            <span class="page-link" style="background-color: #4f46e5; border-color: #4f46e5;">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link text-secondary" href="?page={{ page_obj.next_page_number }}">
+                    Next &raquo;
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link text-muted bg-light">Next &raquo;</span>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
 
 <div class="modal fade" id="previewEmailModal" tabindex="-1" aria-labelledby="previewEmailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">

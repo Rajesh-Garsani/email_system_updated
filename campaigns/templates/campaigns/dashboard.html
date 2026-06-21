@@ -102,7 +102,6 @@
     .campaign-list .list-group-item {
         border: none;
         border-bottom: 1px solid #f3f4f6;
-        padding: 1.25rem 1.5rem;
         transition: background-color 0.2s ease;
     }
     .campaign-list .list-group-item:last-child {
@@ -177,7 +176,7 @@
 
                     {{ form.as_p }}
 
-                    <button type="submit" class="btn btn-create w-100 mt-3 d-flex justify-content-center align-items-center" {% if not default_account %}disabled{% endif %}>
+                    <button type="submit" class="btn btn-create w-100 mt-3 d-flex justify-content-center align-items-center" {% if not default_account %} disabled {% endif %}>
                         <svg width="18" height="18" fill="currentColor" class="bi bi-cloud-arrow-up-fill me-2" viewBox="0 0 16 16">
                             <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 5.146a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2z"/>
                         </svg>
@@ -198,19 +197,55 @@
 
         <div class="list-group campaign-list">
             {% for c in campaigns %}
-                <a href="{% url 'campaign_detail' c.pk %}" class="list-group-item list-group-item-action text-decoration-none d-flex flex-column">
-                    <div class="d-flex justify-content-between align-items-start mb-1">
-                        <span class="campaign-name text-truncate me-2">{{ c.name }}</span>
-                        <span class="status-badge">{{ c.status }}</span>
-                    </div>
-                    <div class="d-flex align-items-center text-muted small mt-1">
-                        <svg width="12" height="12" fill="currentColor" class="bi bi-calendar3 me-1" viewBox="0 0 16 16">
-                            <path d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857V3.857z"/>
-                            <path d="M6.5 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center position-relative p-0" style="transition: background-color 0.2s ease;">
+
+                    <a href="{% url 'campaign_detail' c.pk %}" class="text-decoration-none d-flex flex-column flex-grow-1 p-3 text-dark">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <span class="campaign-name text-truncate me-2">{{ c.name }}</span>
+                            <span class="status-badge">{{ c.status }}</span>
+                        </div>
+                        <div class="d-flex align-items-center text-muted small mt-1">
+                            <svg width="12" height="12" fill="currentColor" class="bi bi-calendar3 me-1" viewBox="0 0 16 16">
+                                <path d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857V3.857z"/>
+                                <path d="M6.5 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+                            </svg>
+                            {{ c.created_at|date:"M d, Y" }}
+                        </div>
+                    </a>
+
+                    <button type="button" class="btn btn-sm btn-outline-danger border-0 rounded-circle p-2 me-3" data-bs-toggle="modal" data-bs-target="#deleteModal{{ c.pk }}" style="z-index: 2;" title="Delete Campaign">
+                        <svg width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16">
+                            <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5Zm-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5ZM4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5Z"/>
                         </svg>
-                        {{ c.created_at|date:"M d, Y" }}
+                    </button>
+                </div>
+
+                <div class="modal fade" id="deleteModal{{ c.pk }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ c.pk }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow">
+                            <div class="modal-header bg-danger text-white border-0">
+                                <h5 class="modal-title d-flex align-items-center" id="deleteModalLabel{{ c.pk }}">
+                                    <svg width="18" height="18" fill="currentColor" class="bi bi-exclamation-triangle-fill me-2" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
+                                    Delete Campaign?
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body p-4 text-center">
+                                <p class="mb-0 text-muted" style="font-size: 1.05rem;">
+                                    Are you sure you want to permanently delete <strong>"{{ c.name }}"</strong>? <br><br>
+                                    <span class="text-danger fw-bold">This action cannot be undone</span> and will erase all associated recipient data and reply logs.
+                                </p>
+                            </div>
+                            <div class="modal-footer border-0 bg-light d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary fw-medium px-4" data-bs-dismiss="modal">Cancel</button>
+                                <form method="post" action="{% url 'delete_campaign' c.pk %}" class="m-0">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger fw-bold px-4">Yes, Delete It</button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
-                </a>
+                </div>
             {% empty %}
                 <div class="p-4 text-center text-muted bg-white">
                     <svg width="32" height="32" fill="#d1d5db" class="bi bi-inbox-fill mb-2" viewBox="0 0 16 16">
@@ -219,6 +254,16 @@
                     <p class="mb-0 small">No campaigns created yet.</p>
                 </div>
             {% endfor %}
+
+            {% if has_more %}
+                <a href="?view=all" class="list-group-item list-group-item-action text-center py-3" style="background-color: #f8fafc; color: #4f46e5; font-weight: 600; font-size: 0.95rem;">
+                    View All Campaigns &rarr;
+                </a>
+            {% elif request.GET.view == 'all' %}
+                <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action text-center text-muted py-3" style="background-color: #f8fafc; font-weight: 600; font-size: 0.95rem;">
+                    &larr; Show Recent Only
+                </a>
+            {% endif %}
         </div>
     </div>
 </div>

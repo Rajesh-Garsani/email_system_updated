@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Email Campaign Manager</title>
+    <title>Send Mail</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,11 +12,21 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
-        /* Global Styles */
+        /* Global Styles & Sticky Footer Flexbox */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc; /* Clean, light enterprise gray */
             color: #334155;
+
+            /* Sticky Footer Magic */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* This pushes the footer to the absolute bottom */
+        .main-container {
+            flex: 1;
         }
 
         /* Enterprise Edge-to-Edge Navbar */
@@ -109,7 +119,7 @@
             <svg width="22" height="22" fill="#818cf8" class="bi bi-envelope-paper-fill me-2" viewBox="0 0 16 16">
                 <path fill-rule="evenodd" d="M6.5 9.5 3 7.5v-6A1.5 1.5 0 0 1 4.5 0h7A1.5 1.5 0 0 1 13 1.5v6l-3.5 2L8 8.75l-1.5.75ZM1.059 3.635 2 3.145v3.531l-1.15-.65A1.5 1.5 0 0 1 0 4.5v-.058l1.059-.807ZM14 3.145l.941.49A1.5 1.5 0 0 1 15 4.5v.058l-1.059.807L15 6.026V4.5a1.5 1.5 0 0 0-.276-.865L14 3.145ZM1 6.026l1.15.65V10.2l-1.059.608A1.5 1.5 0 0 1 0 9.5v-3.41l1 .536v-.599Zm12.85 4.781L15 10.2V9.5a1.5 1.5 0 0 0-.85-1.353l-1-.536v.6l1.059.608-1.15.65v3.531ZM2 10.2v3.3A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5v-3.3l-3.5 2L8 11.25l-2.5 1.45-3.5-2Z"/>
             </svg>
-            CampaignManager
+            Send Mail
         </a>
 
         <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -159,7 +169,7 @@
     </div>
 </nav>
 
-<div class="container">
+<div class="container main-container">
 
     {% if messages %}
         <div class="row justify-content-center mb-4">
@@ -178,6 +188,8 @@
     {% endblock %}
 
 </div>
+
+{% include 'footer/footer_ui.html' %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

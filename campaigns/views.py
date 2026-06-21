@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 import threading
+from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator
 from .forms import CampaignForm, EmailAccountForm
 from .models import Campaign, EmailAccount, Recipient
 from .services import (
@@ -16,14 +18,16 @@ from .services import (
 
 @login_required
 def dashboard(request):
-    campaigns = Campaign.objects.filter(user=request.user).select_related('email_account')
+    # Fetch campaigns and order them from newest to oldest
+    campaign_list = Campaign.objects.filter(user=request.user).select_related('email_account').order_by('-id')
     default_account = EmailAccount.objects.filter(user=request.user, is_active=True).first()
 
     if request.method == 'POST':
         form = CampaignForm(request.POST, request.FILES)
         if form.is_valid():
             if not default_account:
-                messages.error(request, 'No sending email found. Please register again or add Gmail App Password in Advanced Email Settings.')
+                messages.error(request,
+                               'No sending email found. Please register again or add Gmail App Password in Advanced Email Settings.')
                 return redirect('dashboard')
 
             campaign = None
@@ -48,8 +52,19 @@ def dashboard(request):
     else:
         form = CampaignForm()
 
+    # --- NEW: View All Logic ---
+    view_all = request.GET.get('view') == 'all'
+
+    if view_all:
+        campaigns_to_show = campaign_list
+        has_more = False
+    else:
+        campaigns_to_show = campaign_list[:5]  # Show only the 5 most recent
+        has_more = campaign_list.count() > 5
+
     return render(request, 'campaigns/dashboard.html', {
-        'campaigns': campaigns,
+        'campaigns': campaigns_to_show,
+        'has_more': has_more,  # Pass this to the template
         'form': form,
         'default_account': default_account,
     })
@@ -62,7 +77,20 @@ def campaign_detail(request, pk):
         pk=pk,
         user=request.user,
     )
-    return render(request, 'campaigns/detail.html', {'campaign': campaign})
+
+    # Get all recipients and order them
+    recipient_list = campaign.recipients.all().order_by('id')
+
+    # Set up the Paginator to show 50 recipients per page
+    paginator = Paginator(recipient_list, 30)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Pass the paginated object to the template instead of the raw campaign
+    return render(request, 'campaigns/detail.html', {
+        'campaign': campaign,
+        'page_obj': page_obj
+    })
 
 
 @login_required
@@ -146,3 +174,17 @@ def email_accounts(request):
         form = EmailAccountForm()
 
     return render(request, 'campaigns/email_accounts.html', {'accounts': accounts, 'form': form})
+
+
+@login_required
+@require_POST
+def delete_campaign_view(request, pk):
+    # Ensure the user deleting the campaign actually owns it
+    campaign = get_object_or_404(Campaign, pk=pk, user=request.user)
+    campaign_name = campaign.name
+
+    # Delete the campaign (this will also delete all linked recipients automatically)
+    campaign.delete()
+
+    messages.success(request, f'Campaign "{campaign_name}" was successfully deleted.')
+    return redirect('dashboard')

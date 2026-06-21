@@ -8,4 +8,5 @@ urlpatterns = [
     path('campaign/<int:pk>/send/', views.trigger_send, name='trigger_send'),
     path('campaign/<int:pk>/check-replies/', views.trigger_check_replies, name='trigger_check_replies'),
     path('recipient/<int:recipient_id>/reply/', views.send_reply_view, name='send_reply'),
+    path('campaign/<int:pk>/delete/', views.delete_campaign_view, name='delete_campaign'),
 ]

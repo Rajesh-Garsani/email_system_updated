@@ -10,10 +10,10 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-key-change-me")
 
-DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() in ["true", "1", "yes"]
+DEBUG = False
 
 allowed_hosts_env = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost")
-ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(",") if host.strip()]
+ALLOWED_HOSTS = ['sendmail.pythonanywhere.com']
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -25,6 +25,7 @@ INSTALLED_APPS = [
 
     "accounts",
     "campaigns",
+    "footer",
 ]
 
 MIDDLEWARE = [
@@ -50,6 +51,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "footer.context_processors.footer_data",
             ],
         },
     },
@@ -77,6 +79,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"
     },
+    {
+        'NAME': 'accounts.validators.ComplexPasswordValidator',
+    },
 ]
 
 LANGUAGE_CODE = "en-us"
@@ -85,7 +90,8 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
