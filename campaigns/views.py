@@ -3,14 +3,14 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
-
+import threading
 from .forms import CampaignForm, EmailAccountForm
 from .models import Campaign, EmailAccount, Recipient
 from .services import (
     process_uploaded_file,
-    send_campaign_now,
     check_campaign_replies,
     send_individual_reply,
+    send_campaign_background, queue_campaign,
 )
 
 
@@ -69,19 +69,27 @@ def campaign_detail(request, pk):
 @require_POST
 def trigger_send(request, pk):
     campaign = get_object_or_404(Campaign, pk=pk, user=request.user)
+
     try:
-        result = send_campaign_now(campaign)
-        if result['sent']:
-            messages.success(
-                request,
-                f"Sent {result['sent']} email(s). Failed: {result['failed']}. Remaining: {result['remaining']}."
-            )
-        elif result['failed']:
-            messages.error(request, f"No emails sent. Failed: {result['failed']}. Please check recipient errors below.")
-        else:
-            messages.info(request, 'No pending recipients found.')
+        # 1. Immediately mark the campaign as queued so the UI updates
+        queue_campaign(campaign)
+
+        # 2. Start the background thread
+        # We pass the campaign.id instead of the object to prevent memory issues between threads
+        thread = threading.Thread(
+            target=send_campaign_background,
+            args=(campaign.id, None, 2)
+            # Adding a 2-second delay between emails prevents Gmail from blocking the account
+        )
+        thread.daemon = True  # This ensures the thread dies if the main web server restarts
+        thread.start()
+
+        messages.success(request,
+                         "🚀 Campaign started! Emails are sending securely in the background. Refresh the page to see live updates.")
+
     except Exception as exc:
-        messages.error(request, f'Could not send emails: {exc}')
+        messages.error(request, f'Could not start campaign: {exc}')
+
     return redirect('campaign_detail', pk=pk)
 
 

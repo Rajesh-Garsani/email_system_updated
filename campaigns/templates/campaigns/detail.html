@@ -27,17 +27,25 @@
     }
     .btn-send:hover { color: white; }
 
-    .btn-check {
+    .btn-check-replies {
         background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
         color: white;
     }
-    .btn-check:hover { color: white; }
+    .btn-check-replies:hover { color: white; }
 
     /* Alert Box */
     .alert-soft {
         background-color: #f8fafc;
         border: 1px solid #e2e8f0;
         color: #475569;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+    }
+    .alert-soft-warning {
+        background-color: #fffbeb;
+        border: 1px solid #fde68a;
+        color: #92400e;
         border-radius: 0.75rem;
         display: flex;
         align-items: center;
@@ -101,48 +109,86 @@
         box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
         outline: none;
     }
+
+    /* New Preview Button Hover */
+    .btn-preview {
+        transition: all 0.2s ease;
+    }
+    .btn-preview:hover {
+        background-color: #e2e8f0 !important;
+        color: #1e293b !important;
+    }
 </style>
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
     <div>
         <h2 class="page-title mb-1">Campaign: {{ campaign.name }}</h2>
-        <div class="d-flex align-items-center text-muted small">
-            <svg width="14" height="14" fill="currentColor" class="bi bi-envelope-paper-fill me-1" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M6.5 9.5 3 7.5v-6A1.5 1.5 0 0 1 4.5 0h7A1.5 1.5 0 0 1 13 1.5v6l-3.5 2L8 8.75l-1.5.75ZM1.059 3.635 2 3.145v3.531l-1.15-.65A1.5 1.5 0 0 1 0 4.5v-.058l1.059-.807ZM14 3.145l.941.49A1.5 1.5 0 0 1 15 4.5v.058l-1.059.807L15 6.026V4.5a1.5 1.5 0 0 0-.276-.865L14 3.145ZM1 6.026l1.15.65V10.2l-1.059.608A1.5 1.5 0 0 1 0 9.5v-3.41l1 .536v-.599Zm12.85 4.781L15 10.2V9.5a1.5 1.5 0 0 0-.85-1.353l-1-.536v.6l1.059.608-1.15.65v3.531ZM2 10.2v3.3A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5v-3.3l-3.5 2L8 11.25l-2.5 1.45-3.5-2Z"/>
-            </svg>
-            <span class="me-3">{{ campaign.email_account.email_address }}</span>
-            <span class="badge bg-secondary rounded-pill">{{ campaign.status }}</span>
+        <div class="d-flex align-items-center flex-wrap gap-2 mt-2 text-muted small">
+            <div class="d-flex align-items-center">
+                <svg width="14" height="14" fill="currentColor" class="bi bi-envelope-paper-fill me-1" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M6.5 9.5 3 7.5v-6A1.5 1.5 0 0 1 4.5 0h7A1.5 1.5 0 0 1 13 1.5v6l-3.5 2L8 8.75l-1.5.75ZM1.059 3.635 2 3.145v3.531l-1.15-.65A1.5 1.5 0 0 1 0 4.5v-.058l1.059-.807ZM14 3.145l.941.49A1.5 1.5 0 0 1 15 4.5v.058l-1.059.807L15 6.026V4.5a1.5 1.5 0 0 0-.276-.865L14 3.145ZM1 6.026l1.15.65V10.2l-1.059.608A1.5 1.5 0 0 1 0 9.5v-3.41l1 .536v-.599Zm12.85 4.781L15 10.2V9.5a1.5 1.5 0 0 0-.85-1.353l-1-.536v.6l1.059.608-1.15.65v3.531ZM2 10.2v3.3A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5v-3.3l-3.5 2L8 11.25l-2.5 1.45-3.5-2Z"/>
+                </svg>
+                <span class="me-2">{{ campaign.email_account.email_address }}</span>
+            </div>
+
+            <span class="badge bg-secondary rounded-pill me-1">{{ campaign.status }}</span>
+
+            <button type="button" class="btn btn-sm btn-light border fw-semibold text-secondary rounded-pill px-3 btn-preview d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#previewEmailModal" style="font-size: 0.75rem;">
+                <svg width="12" height="12" fill="currentColor" class="bi bi-eye-fill me-1" viewBox="0 0 16 16">
+                    <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                    <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+                </svg>
+                Preview Email
+            </button>
         </div>
     </div>
     <div class="d-flex flex-wrap gap-2">
+        {% if campaign.status != 'Queued' and campaign.status != 'Sending' %}
         <form method="post" action="{% url 'trigger_send' campaign.pk %}" class="m-0">
             {% csrf_token %}
             <button type="submit" class="action-btn btn-send">
                 <svg width="16" height="16" fill="currentColor" class="bi bi-send-fill me-2" viewBox="0 0 16 16"><path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083l6-15Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471-.47 1.178Z"/></svg>
-                Send Emails
+                Start Campaign
             </button>
         </form>
+        {% else %}
+        <button class="action-btn btn-secondary text-white" disabled>
+            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+            Sending...
+        </button>
+        {% endif %}
+
         <form method="post" action="{% url 'trigger_check_replies' campaign.pk %}" class="m-0">
             {% csrf_token %}
-            <button type="submit" class="action-btn btn-check">
+            <button type="submit" class="action-btn btn-check-replies">
                 <svg width="16" height="16" fill="currentColor" class="bi bi-arrow-repeat me-2" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>
                 Check Replies
             </button>
         </form>
+
         <a href="{% url 'dashboard' %}" class="btn btn-light border fw-medium px-3 d-inline-flex align-items-center rounded-3">
             Back
         </a>
     </div>
 </div>
 
+{% if campaign.status == 'Queued' or campaign.status == 'Sending' %}
+<div class="alert alert-soft-warning mb-4 shadow-sm" role="alert">
+    <div class="spinner-border text-warning me-3" role="status" style="width: 1.5rem; height: 1.5rem;"></div>
+    <div>
+        <strong>Campaign in progress!</strong> The system is currently sending emails in the background. This page is set to <b>live-update automatically</b>.
+    </div>
+</div>
+{% else %}
 <div class="alert alert-soft mb-4 shadow-sm" role="alert">
     <svg width="20" height="20" fill="#0ea5e9" class="bi bi-info-circle-fill me-3 flex-shrink-0" viewBox="0 0 16 16">
         <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
     </svg>
     <div>
-        Click <strong>Send Emails</strong>. The system sends a safe small batch, personalizes <code>Hi,</code> into <code>Hi Name,</code>, and updates statuses below.
+        Click <strong>Start Campaign</strong>. The system will securely process and send your emails in the background.
     </div>
 </div>
+{% endif %}
 
 <div class="card data-card mb-5">
     <div class="table-responsive">
@@ -232,4 +278,45 @@
         </table>
     </div>
 </div>
+
+<div class="modal fade" id="previewEmailModal" tabindex="-1" aria-labelledby="previewEmailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 1rem;">
+            <div class="modal-header bg-light border-0 pb-0">
+                <h5 class="modal-title text-muted fw-bold d-flex align-items-center" id="previewEmailModalLabel" style="font-size: 0.85rem; letter-spacing: 1px;">
+                    <svg width="16" height="16" fill="currentColor" class="bi bi-eye-fill me-2" viewBox="0 0 16 16">
+                        <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                        <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+                    </svg>
+                    EMAIL PREVIEW
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-4">
+                    <div class="text-muted small fw-semibold mb-1" style="font-size: 0.75rem;">SUBJECT</div>
+                    <div class="fw-bold text-dark fs-5">{{ campaign.subject }}</div>
+                </div>
+                <div>
+                    <div class="text-muted small fw-semibold mb-1" style="font-size: 0.75rem;">BODY</div>
+                    <div class="p-3 bg-light rounded" style="white-space: pre-wrap; color: #475569; font-size: 0.95rem; border: 1px solid #f1f5f9;">{{ campaign.body }}</div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary rounded-pill px-4 fw-medium" data-bs-dismiss="modal">Close Preview</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if campaign.status == 'Queued' or campaign.status == 'Sending' %}
+<script>
+    // Automatically refresh the page every 4 seconds while the campaign is actively sending.
+    // This provides a "live update" feel without needing complex WebSockets or API calls.
+    setTimeout(function() {
+        window.location.reload();
+    }, 4000);
+</script>
+{% endif %}
+
 {% endblock %}

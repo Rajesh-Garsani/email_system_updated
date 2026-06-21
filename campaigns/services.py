@@ -2,7 +2,7 @@ import re
 import time
 import email as email_parser
 from typing import Dict
-
+from email.utils import parseaddr
 import pandas as pd
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -11,16 +11,15 @@ from django.core.validators import validate_email
 from django.db.models import Count
 from django.utils import timezone
 from imapclient import IMAPClient
+from django.db import connection
 
 from .models import Recipient, Campaign, SuppressionList, EmailAccount
 from .security import decrypt_value
-
 
 ALLOWED_EXTENSIONS = ('.csv', '.xlsx')
 
 
 def personalize_body(body: str, recipient: Recipient) -> str:
-    """Supports both 'Hi {name},' and automatic conversion of first-line 'Hi,' to 'Hi John,'."""
     name = (recipient.name or '').strip() or 'there'
 
     if '{name}' in body:
@@ -40,7 +39,6 @@ def personalize_body(body: str, recipient: Recipient) -> str:
 
 
 def process_uploaded_file(file, campaign: Campaign) -> Dict[str, int]:
-    """Validate CSV/XLSX file and import recipients safely."""
     max_bytes = settings.MAX_UPLOAD_MB * 1024 * 1024
     if file.size > max_bytes:
         raise ValidationError(f'File is too large. Maximum allowed size is {settings.MAX_UPLOAD_MB} MB.')
@@ -64,10 +62,7 @@ def process_uploaded_file(file, campaign: Campaign) -> Dict[str, int]:
         raise ValidationError(f'Missing required columns: {", ".join(sorted(missing))}')
 
     if len(df) > settings.MAX_RECIPIENTS_PER_CAMPAIGN:
-        raise ValidationError(
-            f'Too many rows. Maximum allowed recipients per campaign is '
-            f'{settings.MAX_RECIPIENTS_PER_CAMPAIGN}.'
-        )
+        raise ValidationError(f'Too many rows. Maximum allowed is {settings.MAX_RECIPIENTS_PER_CAMPAIGN}.')
 
     created = 0
     skipped = 0
@@ -105,7 +100,6 @@ def process_uploaded_file(file, campaign: Campaign) -> Dict[str, int]:
 
 
 def queue_campaign(campaign: Campaign) -> int:
-    """Queue all pending/failed recipients. Actual sending should be handled by management command."""
     recipients = campaign.recipients.filter(status__in=['Pending', 'Failed'])
     queued = 0
     for recipient in recipients:
@@ -124,15 +118,8 @@ def queue_campaign(campaign: Campaign) -> int:
     return queued
 
 
-
 def send_campaign_now(campaign: Campaign, limit: int = None, delay_seconds: int = 0) -> Dict[str, int]:
-    """
-    Simple user-friendly sending: user clicks Send Emails and this sends a small batch immediately.
-    It keeps safety limits, daily limits, validation, and personalization, but hides the manual queue command.
-    """
     limit = limit or settings.DEFAULT_SEND_BATCH_LIMIT
-
-    # Convert pending/failed recipients into queued state first.
     queue_campaign(campaign)
 
     recipients = Recipient.objects.select_related('campaign', 'campaign__email_account').filter(
@@ -154,7 +141,6 @@ def send_campaign_now(campaign: Campaign, limit: int = None, delay_seconds: int 
         if delay_seconds and delay_seconds > 0:
             time.sleep(delay_seconds)
 
-    # Refresh only this campaign's visible status.
     remaining = campaign.recipients.filter(status__in=['Pending', 'Failed', 'Queued', 'Sending']).exists()
     if remaining:
         campaign.status = 'Sending'
@@ -164,7 +150,20 @@ def send_campaign_now(campaign: Campaign, limit: int = None, delay_seconds: int 
         campaign.status = 'Draft'
     campaign.save(update_fields=['status', 'updated_at'])
 
-    return {'sent': sent, 'failed': failed, 'remaining': campaign.recipients.filter(status__in=['Pending', 'Failed', 'Queued']).count()}
+    return {'sent': sent, 'failed': failed,
+            'remaining': campaign.recipients.filter(status__in=['Pending', 'Failed', 'Queued']).count()}
+
+
+def send_campaign_background(campaign_id, limit=None, delay_seconds=None):
+    try:
+        campaign = Campaign.objects.get(id=campaign_id)
+        queue_campaign(campaign)
+        send_campaign_now(campaign, limit=limit, delay_seconds=delay_seconds)
+    except Exception as e:
+        print(f"Background sending error: {e}")
+    finally:
+        connection.close()
+
 
 def _email_connection(account: EmailAccount):
     password = decrypt_value(account.encrypted_password)
@@ -189,13 +188,12 @@ def daily_sent_count(account: EmailAccount) -> int:
 
 
 def send_one_recipient(recipient: Recipient) -> bool:
-    """Send one queued email and update recipient status."""
     campaign = recipient.campaign
     account = campaign.email_account
 
     if daily_sent_count(account) >= settings.MAX_EMAILS_PER_ACCOUNT_PER_DAY:
         recipient.status = 'Failed'
-        recipient.error_message = 'Daily sending limit reached for this email account.'
+        recipient.error_message = 'Daily sending limit reached.'
         recipient.save(update_fields=['status', 'error_message'])
         return False
 
@@ -228,7 +226,6 @@ def send_one_recipient(recipient: Recipient) -> bool:
 
 
 def send_queued_emails(limit: int = None, delay_seconds: int = None) -> Dict[str, int]:
-    """Send a small batch of queued emails. Run using management command or scheduler."""
     limit = limit or settings.DEFAULT_SEND_BATCH_LIMIT
     delay_seconds = settings.DEFAULT_SEND_DELAY_SECONDS if delay_seconds is None else delay_seconds
 
@@ -269,9 +266,12 @@ def _refresh_campaign_statuses():
 
 
 def check_campaign_replies(campaign: Campaign) -> int:
-    """Check unread replies for the campaign's own email account."""
-    sent_recipients = campaign.recipients.filter(status='Sent')
-    email_list = set(sent_recipients.values_list('email', flat=True))
+    """Uses a targeted IMAP Search to pinpoint replies exactly."""
+    sent_recipients = campaign.recipients.filter(status__in=['Sent', 'Replied'])
+
+    # Clean and lower the emails to guarantee matching
+    email_list = {email.strip().lower() for email in sent_recipients.values_list('email', flat=True)}
+
     if not email_list:
         return 0
 
@@ -279,43 +279,62 @@ def check_campaign_replies(campaign: Campaign) -> int:
     password = decrypt_value(account.encrypted_password)
     updated = 0
 
-    with IMAPClient(account.imap_host) as server:
-        server.login(account.email_address, password)
-        server.select_folder('INBOX')
-        messages = server.search(['UNSEEN'])
+    try:
+        with IMAPClient(account.imap_host) as server:
+            server.login(account.email_address, password)
+            server.select_folder('INBOX')
 
-        for msg_id in messages:
-            raw_message = server.fetch(msg_id, ['ENVELOPE', 'RFC822'])
-            envelope = raw_message[msg_id][b'ENVELOPE']
-            sender_obj = envelope.from_[0]
-            sender = f'{sender_obj.mailbox.decode()}@{sender_obj.host.decode()}'.lower()
+            for recipient_email in email_list:
+                # Ask Gmail to find emails SPECIFICALLY from this person
+                messages = server.search(['FROM', recipient_email])
 
-            if sender not in email_list:
-                continue
+                if not messages:
+                    continue
 
-            msg = email_parser.message_from_bytes(raw_message[msg_id][b'RFC822'])
-            reply_body = ''
+                # Grab the latest email from this person
+                latest_msg_id = messages[-1]
+                raw_message = server.fetch(latest_msg_id, ['RFC822'])
+                msg = email_parser.message_from_bytes(raw_message[latest_msg_id][b'RFC822'])
 
-            if msg.is_multipart():
-                for part in msg.walk():
-                    content_type = part.get_content_type()
-                    content_disposition = str(part.get('Content-Disposition'))
-                    if content_type == 'text/plain' and 'attachment' not in content_disposition:
-                        payload = part.get_payload(decode=True)
-                        if payload:
-                            reply_body = payload.decode(errors='ignore')
-                        break
-            else:
-                payload = msg.get_payload(decode=True)
-                if payload:
-                    reply_body = payload.decode(errors='ignore')
+                reply_body = ''
 
-            recipient = sent_recipients.filter(email=sender).first()
-            if recipient:
-                recipient.status = 'Replied'
-                recipient.reply_text = reply_body.strip()
-                recipient.save(update_fields=['status', 'reply_text'])
-                updated += 1
+                if msg.is_multipart():
+                    for part in msg.walk():
+                        content_type = part.get_content_type()
+                        content_disposition = str(part.get('Content-Disposition'))
+
+                        if content_type == 'text/plain' and 'attachment' not in content_disposition:
+                            payload = part.get_payload(decode=True)
+                            if payload:
+                                reply_body = payload.decode(errors='ignore')
+                            break
+                        elif content_type == 'text/html' and not reply_body and 'attachment' not in content_disposition:
+                            payload = part.get_payload(decode=True)
+                            if payload:
+                                reply_body = payload.decode(errors='ignore')
+                else:
+                    payload = msg.get_payload(decode=True)
+                    if payload:
+                        reply_body = payload.decode(errors='ignore')
+
+                if reply_body:
+                    # Clean up HTML tags nicely
+                    reply_body = re.sub(r'<style.*?>.*?</style>', '', reply_body, flags=re.DOTALL | re.IGNORECASE)
+                    reply_body = re.sub(r'<[^>]+>', ' ', reply_body)
+                    reply_body = ' '.join(reply_body.split())
+                else:
+                    reply_body = "[Message received but body could not be extracted]"
+
+                # Get the DB record and update it
+                recipient = sent_recipients.filter(email=recipient_email).first()
+                if recipient and (recipient.status != 'Replied' or recipient.reply_text != reply_body[:2000]):
+                    recipient.status = 'Replied'
+                    recipient.reply_text = reply_body[:2000]  # Save up to 2000 characters
+                    recipient.save(update_fields=['status', 'reply_text'])
+                    updated += 1
+
+    except Exception as e:
+        print(f"IMAP Error: {e}")
 
     return updated
 
