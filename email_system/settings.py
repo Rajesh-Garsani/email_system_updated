@@ -1,8 +1,6 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-# Email_System
-# Rajesh153@
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load .env file from project root
